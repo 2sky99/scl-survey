@@ -439,16 +439,12 @@ const DETAIL_OPTIONS = {
       ["중금속 및 미네랄 검사", "", "tube"],
       ["비유전성 고형암 유전자 패널II 검사", "", "tube"],
     ]
-  },
-  "SCL 기관 소개": {
-    title: "받아 보실 자료를<br>모두 선택해 주세요",
-    items: [
-      ["홈페이지", "SCL 공식 홈페이지 안내", "globe"],
-      ["기관 브로슈어", "SCL 소개 및 주요 역량", "book"],
-      ["블로그", "검사·건강 정보 콘텐츠", "pen"],
-    ]
   }
 };
+/* 'SCL 기관 소개'는 선택 없이 자료 전체를 보내므로, 시트에는 아래 값이 자동 기록됨 */
+const ORG_CONTENTS_ALL = "홈페이지, 기관 브로슈어, 블로그";
+/* 상담(⑤) 페이지를 건너뛰는 카테고리 */
+const SKIP_CONSULT = ["항균제 내성 소식"];
 const YN_OPTIONS = {
   consult: [["예", "영업 사원 상담 신청하기", "연락처를 남겨 주시면 연락드리겠습니다.", "phone"], ["아니오", "괜찮습니다", "자료만 이메일로 받겠습니다.", "mail"]],
   cost:    [["예", "검사 비용 상담 신청하기", "연락처를 남겨 주시면 연락드리겠습니다.", "receipt"], ["아니오", "괜찮습니다", "다음에 문의하겠습니다.", "mail"]],
@@ -490,11 +486,14 @@ document.querySelectorAll("[data-yn]").forEach(el => {
 });
 
 // 화면 흐름: 세부 선택(④)은 세부 항목이 있는 카테고리만, 검사 비용 상담(⑥)은 'SCL 검사 정보' 선택자에게만
+// 관심 정보 화면에서는 지금 고른 값을 기준으로 흐름을 계산 (버튼 문구·단계 수가 바로 바뀌도록)
+function curInterest(){ return current === "interest" ? (radio("interest") || state.interest) : state.interest; }
 function flow(){
+  const it = curInterest();
   const f = ["main","basic","interest"];
-  if (!state.interest || DETAIL_OPTIONS[state.interest]) f.push("detail");
-  f.push("consult");
-  if (state.interest === "SCL 검사 정보") f.push("cost");
+  if (!it || DETAIL_OPTIONS[it]) f.push("detail");
+  if (SKIP_CONSULT.indexOf(it) < 0) f.push("consult");
+  if (it === "SCL 검사 정보") f.push("cost");
   f.push("done");
   return f;
 }
@@ -502,23 +501,29 @@ let current = "main";
 
 function render(){
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("active", s.dataset.screen === current));
-  const f = flow(), idx = f.indexOf(current), total = f.length - 2;
+  const f = flow(), idx = f.indexOf(current);
   document.body.classList.toggle("main-mode", current === "main");
   document.body.classList.toggle("done-mode", current === "done");
   $("#topbar").hidden = current === "main" || current === "done";
   $("#backBtn").classList.toggle("hide", idx <= 1);
-  $("#stepLabel").innerHTML = `<b>${idx}</b> / ${total}`;
-  $("#segs").innerHTML = Array.from({length: total}, (_, i) => `<i class="${i < idx ? "on" : ""}"></i>`).join("");
+  updateNav();
   // STEP 번호 자동
   const eb = document.querySelector(`.screen[data-screen="${current}"] .eyebrow`);
   if (eb) eb.textContent = "STEP " + String(idx).padStart(2, "0");
   $("#cta").hidden = current === "done";
-  const next = f[idx + 1];
-  $("#nextBtn").textContent = current === "main" ? "설문 시작하기" : next === "done" ? "제출하기" : "다음";
   document.querySelector('meta[name="theme-color"]').content = current === "main" ? "#0044D9" : current === "done" ? "#FFFFFF" : "#F4F6FA";
   placePhone();
   syncChecked();
   window.scrollTo(0, 0);
+}
+
+// 단계 표시·버튼 문구 갱신
+function updateNav(){
+  const f = flow(), idx = f.indexOf(current), total = f.length - 2;
+  $("#stepLabel").innerHTML = `<b>${idx}</b> / ${total}`;
+  $("#segs").innerHTML = Array.from({length: total}, (_, i) => `<i class="${i < idx ? "on" : ""}"></i>`).join("");
+  const next = f[idx + 1];
+  $("#nextBtn").textContent = current === "main" ? "설문 시작하기" : next === "done" ? "제출하기" : "다음";
 }
 
 function needPhone(){ return state.consult === "예" || state.cost === "예"; }
@@ -592,13 +597,15 @@ function validate(){
 async function submit(){
   const btn = $("#nextBtn");
   btn.disabled = true; btn.innerHTML = '<span class="spin"></span>제출 중…';
+  const skipConsult = SKIP_CONSULT.indexOf(state.interest) >= 0;
   const payload = {
     clientType: state.clientType, name: state.name, region: state.region, hospital: state.hospital, email: state.email,
     interest: state.interest,
     tests: state.interest === "SCL 검사 정보" ? state.details.join(", ") : "",
-    contents: state.interest === "SCL 기관 소개" ? state.details.join(", ") : "",
-    consult: state.consult, cost: state.interest === "SCL 검사 정보" ? state.cost : "해당 없음",
-    phone: needPhone() ? state.phone : "",
+    contents: state.interest === "SCL 기관 소개" ? ORG_CONTENTS_ALL : "",
+    consult: skipConsult ? "해당 없음" : state.consult,
+    cost: state.interest === "SCL 검사 정보" ? state.cost : "해당 없음",
+    phone: (!skipConsult && needPhone()) ? state.phone : "",
     consent: state.consent ? "동의" : "", marketing: state.marketing ? "동의" : "미동의",
     token: SCRIPT_TOKEN
   };
@@ -664,6 +671,7 @@ $("#backBtn").addEventListener("click", () => {
 document.addEventListener("change", e => {
   const f = e.target.closest("[data-f]"); if (f) f.classList.remove("invalid");
   if (e.target.name === "consult" || e.target.name === "cost"){ state[e.target.name] = e.target.value; placePhone(); }
+  if (e.target.name === "interest") updateNav();
   syncChecked();
 });
 document.addEventListener("input", e => { const f = e.target.closest("[data-f]"); if (f) f.classList.remove("invalid"); });
