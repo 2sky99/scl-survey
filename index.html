@@ -425,21 +425,19 @@ const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyeX0SeQPI2FdpZlwm55
 /* ▼ (선택) Code.gs 의 API_TOKEN 과 같은 값. 비워 두면 사용 안 함 */
 const SCRIPT_TOKEN = "";
 
-/* ▼ 선택지 — 실제 검사명/자료명으로 바꾸세요 (아이콘: flask, building, book, heart, pen) */
+/* ▼ 선택지 — 실제 검사명/자료명으로 바꾸세요 (아이콘: tube, flask, building, book, heart, pen, globe, shield) */
 const INTEREST_OPTIONS = [
-  ["SCL 검사 정보", "검사 안내 자료", "flask"],
-  ["항균제 내성 소식", "항균제 내성 관련 자료", "shield"],
   ["SCL 기관 소개", "홈페이지·브로슈어·블로그", "building"],
+  ["SCL 검사 정보", "검사 안내 자료", "tube"],
+  ["항균제 내성 소식", "항균제 내성 관련 자료", "shield"],
 ];
 const DETAIL_OPTIONS = {
   "SCL 검사 정보": {
     title: "관심 있는 검사를<br>모두 선택해 주세요",
     items: [
-      ["검사 항목 1", "검사 설명을 입력하세요", "flask"],
-      ["검사 항목 2", "검사 설명을 입력하세요", "flask"],
-      ["검사 항목 3", "검사 설명을 입력하세요", "flask"],
-      ["검사 항목 4", "검사 설명을 입력하세요", "flask"],
-      ["검사 항목 5", "검사 설명을 입력하세요", "flask"],
+      ["SCL 마약 선별검사 & 확진검사", "", "tube"],
+      ["중금속 및 미네랄 검사", "", "tube"],
+      ["비유전성 고형암 유전자 패널II 검사", "", "tube"],
     ]
   },
   "SCL 기관 소개": {
@@ -460,6 +458,7 @@ const YN_OPTIONS = {
 const ICONS = {
   globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   shield:'<path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/>',
+  tube:'<rect x="8.5" y="2" width="7" height="4" rx="1"/><path d="M9.5 6v12.5a2.5 2.5 0 0 0 5 0V6"/><path d="M9.5 12.5h5"/>',
   flask:'<path d="M9 3h6M10 3v6.5L4.6 18.2A2 2 0 0 0 6.3 21h11.4a2 2 0 0 0 1.7-2.8L14 9.5V3"/><path d="M7.2 15h9.6"/>',
   building:'<path d="M4 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16M16 9h2a2 2 0 0 1 2 2v10M3 21h18M8 7h4M8 11h4M8 15h4"/>',
   book:'<path d="M4 19.5V5a2 2 0 0 1 2-2h14v15H6.5A2.5 2.5 0 0 0 4 20.5 2.5 2.5 0 0 0 6.5 23H20"/><path d="M8 7h8"/>',
